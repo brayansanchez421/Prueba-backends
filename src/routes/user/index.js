@@ -7,6 +7,6 @@ import { checkPermissions } from "../../middlewares/permission.middleware.js";
 
 routes.use("/users", checkPermissions(["UserPermission"]),UserRoutes);
 routes.use("/permissions",checkPermissions(["RolePermission"]), PermissionRoutes);
-routes.use("/roles", RolesRoutes);
+routes.use("/roles",checkPermissions(["RolePermission"]), RolesRoutes);
 
 export default routes;
