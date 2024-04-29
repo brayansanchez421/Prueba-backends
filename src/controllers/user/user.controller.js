@@ -32,11 +32,22 @@ export const getUser = async (req, res) => {
         if (!user) {
             return res.status(404).json(setSend( "User not found" ));
         }
-        res.json(user);
+
+        // Obtener el nombre del rol asociado al usuario
+        const role = await Role.findById(user.role); // Suponiendo que el campo "role" contiene el _id del rol
+        if (!role) {
+            return res.status(404).json(setSend( "Role not found" ));
+        }
+
+        // Modificar la respuesta para incluir el nombre del rol en lugar del _id
+        const userWithRoleName = { ...user.toJSON(), role: role.nombre };
+
+        res.json(userWithRoleName);
     } catch (error) {
         res.status(500).json(setSend( "Internal server error" ));
     }
 };
+
 
 export const getAllUsers = async (req, res) => {
     try {
