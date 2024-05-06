@@ -1,7 +1,49 @@
 import User from "../../models/user/user.model.js";
 import Role from '../../models/user/role.models.js';
 import { setSend } from "../../helpers/setSend.js";
-import {sendDeleteAccountConfirmationEmail, sendDeleteUserEmail} from "../../helpers/email/emailRegister.js"
+import {sendDeleteAccountConfirmationEmail, sendDeleteUserEmail, sendRegistrationEmailWithTemporaryPassword} from "../../helpers/email/emailRegister.js"
+
+export const createUser = async (req, res) => {
+    const { username, email, role } = req.body;
+  
+    try {
+      // Verificar si el correo ya está registrado
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json(setSend("Email already exists"));
+      }
+  
+      // Generar una contraseña temporal aleatoria
+      const temporaryPassword = Math.random().toString(36).substring(2, 10);
+  
+      // Crear el nuevo usuario
+      const newUser = new User({ username, email, password: temporaryPassword, role });
+      const userSaved = await newUser.save();
+  
+      // Enviar el correo electrónico de registro con la contraseña temporal
+      await sendRegistrationEmailWithTemporaryPassword(email, username, temporaryPassword);
+  
+      res.json({
+        id: userSaved._id,
+        username: userSaved.username,
+        email: userSaved.email,
+        createdAt: userSaved.createdAt,
+        updatedAt: userSaved.updatedAt,
+        message: "Successful registration. Check your email for the temporary password.",
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json(setSend("Internal server error"));
+    }
+  };
+  
+
+
+
+
+
+
+
 
 
 export const updateUser = async (req, res) => {

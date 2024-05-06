@@ -192,4 +192,75 @@ export const sendRegistrationEmail = async (email, name, userSaved) => {
         return setSend("Failed to send confirmation code email");
     }
 };
+export const sendRegistrationEmailWithTemporaryPassword = async (email, username, temporaryPassword) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Account activation",
+    html: `<!DOCTYPE html>
+    <html lang="es">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account activation</title>
+    <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .logo {
+      max-width: 100px;
+      display: block;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #007bff;
+    }
+    p {
+      color: #333; 
+    }
+    strong {
+      color: #007bff; 
+    }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+    <img src="https://media.discordapp.net/attachments/1214959339413180517/1224352644148101140/doko_avatar_new.png?ex=662fa341&is=661d2e41&hm=1792584a263e87ccb6aa3f4a7b3931479bfc00c9f4609643a80d685444568d6b&=&format=webp&quality=lossless&width=543&height=498" alt="Logo de la empresa" class="logo">
+    <h1>Welcome, ${username}!</h1>
+    <p>Your account has been created successfully. Please use the following temporary password to login:</p>
+    <p><strong>${temporaryPassword}</strong></p>
+    <p>Remember, this is a temporary password. For your security, please change it after logging in.</p>
+    </div>
+    </body>
+    </html>`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return setSend("Registration email with temporary password sent successfully");
+  } catch (error) {
+    console.error(error);
+    return setSend("Failed to send registration email with temporary password");
+  }
+};
+
 
