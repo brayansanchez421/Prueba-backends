@@ -6,13 +6,12 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 3,
-      maxlength: 20,
       trim: true,
     },
     state: {
       type: Boolean,
       required: true,
-      default: false,
+      default: true,
     },
 
     description: {
@@ -42,4 +41,4 @@ const courseSchema = new mongoose.Schema(
 
 
 
-export default mongoose.model("Courses", courseSchema);
+export default mongoose.model("Course", courseSchema);
