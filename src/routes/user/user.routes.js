@@ -13,7 +13,7 @@ router.get("/get/:id",  getUser);
 router.post("/createUser",  createUser);
 
 
-router.put('/modify/:id', upload.single('image'), updateUser);
+router.put('/modify/:id', upload.single('userImage'), updateUser);
 
 router.delete("/delete/:id", deleteUser);
 router.delete("/delete/:id/confirm",deleteUserConfirmation);

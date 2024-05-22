@@ -53,7 +53,13 @@ export const updateUser = async (req, res) => {
     const { username, email, state, role, userImage } = req.body;
     const file = req.file;
 
-   
+    console.log("Received data:");
+    console.log("id:", id);
+    console.log("username:", username);
+    console.log("email:", email);
+    console.log("state:", state);
+    console.log("role:", role);
+    console.log("file:", file);
 
     try {
         const roleObject = await Role.findOne({ nombre: role });
