@@ -50,22 +50,33 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { username, email, state, role } = req.body;
+    const { username, email, state, role, userImage } = req.body;
+    const file = req.file;
+
+   
 
     try {
-        // Buscar el ID del rol por nombre
         const roleObject = await Role.findOne({ nombre: role });
         if (!roleObject) {
             return res.status(404).json({ msg: 'Role not found' });
         }
 
-        // Actualizar el usuario con el ID del rol encontrado
-        const updatedUser = await User.findByIdAndUpdate(id, { username, email, state, role: roleObject._id }, { new: true });
+        // Obtener la URL de la imagen subida si existe
+        let updatedFields = { username, email, state, role: roleObject._id, userImage };
+        if (file) {
+            updatedFields.userImage = file.path; // Suponiendo que 'image' es el campo donde guardas la URL de la imagen
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(id, updatedFields, { new: true });
         res.json(updatedUser);
     } catch (error) {
         res.status(500).json({ msg: 'Internal server error' });
     }
 };
+
+
+
+
 
 
 export const getUser = async (req, res) => {
