@@ -1,17 +1,27 @@
-import Category from '../../models/courses/category.model.js'
+import Category from '../../models/courses/category.model.js';
 
 // Crear una nueva categoría
 export const createCategory = async (req, res) => {
-    const { name, image, description } = req.body;
+    const { name, description } = req.body;
+    const file = req.file; // Obtener el archivo de imagen del cuerpo de la solicitud
 
-    try {       
+    try {
+        let imagePath = ''; // Inicializar la variable para almacenar la ruta de la imagen
+
+        // Si se ha enviado un archivo de imagen
+        if (file) {
+            imagePath = file.path; // Obtener la ruta del archivo de imagen
+        }
+        
         // Crear una nueva instancia de la categoría con los datos recibidos
         const newCategory = new Category({
             name,
-            image,
+            image: imagePath, // Guardar la ruta de la imagen en el campo 'image'
             description
         });
-
+        console.log(file)
+        console.log(imagePath)
+        console.log(newCategory)
         // Guardar la nueva categoría en la base de datos
         const savedCategory = await newCategory.save();
 
@@ -28,6 +38,7 @@ export const createCategory = async (req, res) => {
     }
 };
 
+
 // Obtener todas las categorías
 export const getCategories = async (req, res) => {
     try {
@@ -41,3 +52,4 @@ export const getCategories = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+

@@ -12,6 +12,7 @@ router.post('/reset-password', resetPassword);
 router.post('/verify', resetPasswordVerify);
 router.post('/passwordReset', passwordReset);
 
+
 router.get('/auth/google',
   passport.authenticate('google', {scope: ['email', 'profile']})
 )
