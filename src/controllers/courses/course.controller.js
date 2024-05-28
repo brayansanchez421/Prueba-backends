@@ -41,45 +41,50 @@ export const getAllCourses = async (req, res) => {
 
 
 export const createCourse = async (req, res) => {
-    const { title, description, image, category } = req.body;
+    const { title, description, image, category, content } = req.body;
 
     try {       
-     
-        const newCourse = new Course({ title, description, image, category});
+        const newCourse = new Course({ title, description, image, category, content });
         const savedCourse = await newCourse.save();
 
         res.json({
             id: savedCourse._id,
             title: savedCourse.title,
             description: savedCourse.description,
-            category : savedCourse.category,
+            image: savedCourse.image,
+            category: savedCourse.category,
+            content: savedCourse.content,
             createdAt: savedCourse.createdAt,
             updatedAt: savedCourse.updatedAt,
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json(setSend("Internal server error"));
+        res.status(500).json({ msg: "Internal server error" });
     }
 };
 
-
 export const updateCourse = async (req, res) => {
     const { id } = req.params;
-    const { title, description, image, category } = req.body;
+    const { title, description, image, category, content } = req.body;
 
     try {
-   
         const categoryObject = await Category.findOne({ name: category });
         if (!categoryObject) {
             return res.status(404).json({ msg: 'Category not found' });
         }
 
-        const updatedCourse = await Course.findByIdAndUpdate(id, { title, description, image, category: categoryObject._id }, { new: true });
+        const updatedCourse = await Course.findByIdAndUpdate(
+            id, 
+            { title, description, image, category: categoryObject._id, content }, 
+            { new: true }
+        );
+        
         res.json(updatedCourse);
     } catch (error) {
         res.status(500).json({ msg: 'Internal server error' });
     }
 };
+
 
 
 export const deleteCourse = async (req, res) => {
