@@ -9,6 +9,8 @@ import {sendResetCodeEmail} from "../helpers/email/emailService.js"
 import {sendResetEmail} from "../helpers/email/emailReset.js"
 import {sendRegistrationEmail} from "../helpers/email/emailRegister.js"
 import passport from "passport";
+import jwt from 'jsonwebtoken'
+import {TOKEN_SECRET} from '../config.js'
 
 export const resetPassword = async (req, res) => {
   const { email } = req.body;
@@ -123,10 +125,10 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json(setSend("Incorrect Password"));
     if (userFound.state == false) return res.status(400).json(setSend("Invalid user"));
 
-    const token = await createAccessToken({ id: userFound._id, role: userFound.role });
+    const token = await createAccessToken({ email: userFound.email, id: userFound._id, role: userFound.role });
     console.log(token);
 
-    res.cookie("token", token, { httpOnly: true, secure: true });
+    res.cookie("token", token);
     res.json({
       id: userFound._id,
       username: userFound.username,
@@ -168,4 +170,36 @@ export const activate = async (req, res) => {
   }
 };
 
+export const verifyToken = async (req, res) => {
+  const { token } = req.cookies;
+  console.log("Token recibido:", token);
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
 
+  jwt.verify(token, TOKEN_SECRET, async (err, user) => {
+    if (err) {
+      console.error("Error al verificar el token:", err);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    console.log("Datos del usuario del token:", user);
+    const userFound = await User.findOne({ email: user.email });
+    console.log("Usuario encontrado:", userFound);
+
+    if (!userFound) {
+      console.error("Usuario no encontrado:");
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    console.log("Datos del usuario encontrados:", {
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+    });
+
+    return res.json({
+      id: userFound._id,
+      username: userFound.username,
+      email: userFound.email,
+    });
+  });
+};

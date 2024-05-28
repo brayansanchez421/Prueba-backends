@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, logout, activate, resetPassword, resetPasswordVerify, passwordReset } from "../controllers/auth.controller.js";
+import { login, register, logout, activate, resetPassword, resetPasswordVerify, passwordReset, verifyToken } from "../controllers/auth.controller.js";
 
 import passport from "passport";
 const router = Router();
@@ -11,6 +11,7 @@ router.get('/activation/:_id', activate );
 router.post('/reset-password', resetPassword);
 router.post('/verify', resetPasswordVerify);
 router.post('/passwordReset', passwordReset);
+router.get("/tokenVerify", verifyToken);
 
 router.get('/auth/google',
   passport.authenticate('google', {scope: ['email', 'profile']})
