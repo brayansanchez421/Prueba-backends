@@ -2,12 +2,12 @@
 import  Jwt  from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
 export function createAccessToken(user){    
-    const payload = { id: user._id, role: user.role };
-
+    const payload = { email: user.email, id: user._id, role: user.role };
+    console.log(user);
 return new Promise((resolve, reject) => {
     Jwt.sign(
         payload, 
-    TOKEN_SECRET,
+        TOKEN_SECRET,
     {
         expiresIn:"2h"
     },
