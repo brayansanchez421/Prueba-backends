@@ -143,16 +143,13 @@ export const getCoursesByCategory = async (req, res) => {
     const { categoryName } = req.params;
 
     try {
-        // Log para verificar el nombre de la categoría recibida
         console.log("Buscando categoría:", categoryName);
 
         // Buscar la categoría por nombre
         const category = await Category.findOne({ name: categoryName });
 
-        // Log para verificar si se encontró la categoría
         console.log("Categoría encontrada:", category);
 
-        // Si no se encuentra la categoría, devolver un error
         if (!category) {
             return res.status(404).json(setSend("Category not found"));
         }
@@ -160,15 +157,12 @@ export const getCoursesByCategory = async (req, res) => {
         // Buscar todos los cursos que pertenezcan a la categoría encontrada
         const courses = await Course.find({ category: category._id }).populate('category', 'name');
 
-        // Log para verificar los cursos encontrados
         console.log("Cursos encontrados:", courses);
 
-        // Si no se encuentran cursos, devolver un mensaje adecuado
         if (!courses.length) {
             return res.status(404).json(setSend("No courses found for this category"));
         }
 
-        // Formatear los cursos con el nombre de la categoría
         const coursesWithCategoryName = courses.map(course => ({
             ...course._doc,
             category: course.category.name
