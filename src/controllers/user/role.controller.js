@@ -1,5 +1,7 @@
 import Role from "../../models/user/role.models.js";
 import Permissions from "../../models/user/permissions.models.js";
+import User from "../../models/user/user.model.js";
+
 
 export const createRole = async (req, res) => {
   const { nombre, permisos } = req.body;
@@ -57,15 +59,29 @@ export const getRole = async (req, res) => {
       res.status(404).json({ message: error.message });
     }
   };
+
+  
   export const deleteRole = async (req, res) => {
     try {
       const { id } = req.params;
+  
+      const roleToDelete = await Role.findById(id);
+      if (!roleToDelete) throw new Error('Rol no encontrado');
+  
+      const userRole = await Role.findOne({ nombre: 'usuario' });
+      if (!userRole) throw new Error('Rol "usuario" no encontrado');
+  
+      await User.updateMany({ role: roleToDelete._id }, { role: userRole._id });
+  
       const deletedRole = await Role.findByIdAndDelete(id);
       if (!deletedRole) throw new Error('Rol no encontrado');
-      res.status(200).json({ message: 'Rol eliminado correctamente' });
+  
+      res.status(200).json({ message: 'Rol eliminado correctamente y usuarios actualizados' });
     } catch (error) {
-      res.status(404).json({ message: error.message });
+      res.status(500).json({ message: error.message });
     }
   };
+  
+  
   
       
