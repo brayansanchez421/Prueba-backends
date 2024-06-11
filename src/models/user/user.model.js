@@ -20,9 +20,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       validate: {
-        validator: (value) => {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        },
+        validator: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
         message: "Invalid email format",
       },
     },
@@ -31,12 +29,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
-
     userImage: {
       type: String,
       required: false,
     },
-    
     resetCode: {
       type: String,
     },
@@ -54,6 +50,10 @@ const userSchema = new mongoose.Schema(
       ref: "Role",
       default: null,
     },
+    courses: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course"
+    }],
   },
   {
     timestamps: true,

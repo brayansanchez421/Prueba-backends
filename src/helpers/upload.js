@@ -1,6 +1,9 @@
 import multer from 'multer';
-import { storage } from './cloudinaryConfig.js';
+import { imageStorage, contentStorage } from './cloudinaryConfig.js';
 
-const upload = multer({ storage: storage });
+const uploadImage = multer({ storage: imageStorage });
+const uploadContent = multer({ storage: contentStorage });
+const upload = multer();
 
-export default upload;
+
+export { uploadImage, uploadContent, upload };

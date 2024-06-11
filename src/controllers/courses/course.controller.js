@@ -43,11 +43,11 @@ export const getAllCourses = async (req, res) => {
 export const createCourse = async (req, res) => {
     const { title, description, category: categoryName, content } = req.body;
     const file = req.file; // Obtener el archivo de imagen del cuerpo de la solicitud
-
-    // Log para verificar los datos recibidos
-    console.log("Datos recibidos en la solicitud:", { title, description, categoryName, content, file });
+    const contentFile = req.file; // Obtener el archivo de contenido del cuerpo de la solicitud
 
     try {
+        console.log("Datos recibidos en la solicitud:", { title, description, categoryName, content, file });
+
         // Buscar la categoría por nombre
         const category = await Category.findOne({ name: categoryName });
 
@@ -58,10 +58,16 @@ export const createCourse = async (req, res) => {
         }
 
         let imagePath = ''; // Inicializar la variable para almacenar la ruta de la imagen
+        let contentPath = ''; // Inicializar la variable para almacenar la ruta del contenido
 
         // Si se ha enviado un archivo de imagen
         if (file) {
             imagePath = file.path; // Obtener la ruta del archivo de imagen
+        }
+
+        // Si se ha enviado un archivo de contenido
+        if (contentFile) {
+            contentPath = contentFile.path; // Obtener la ruta del archivo de contenido
         }
 
         // Crear una nueva instancia del curso con los datos recibidos
@@ -70,7 +76,7 @@ export const createCourse = async (req, res) => {
             description,
             image: imagePath, // Guardar la ruta de la imagen en el campo 'image'
             category: category._id, // Usar el ID de la categoría encontrada
-            content
+            content: contentPath // Guardar la ruta del contenido en el campo 'content'
         });
 
         // Guardar el nuevo curso en la base de datos
@@ -95,6 +101,7 @@ export const createCourse = async (req, res) => {
         res.status(500).json({ msg: "Internal server error" });
     }
 };
+
 
 
 export const updateCourse = async (req, res) => {

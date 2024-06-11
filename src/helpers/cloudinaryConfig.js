@@ -7,13 +7,24 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
+// Storage for user images
+const imageStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'user_images',
         allowed_formats: ['jpg', 'png'],
-        transformation: [{ width: 200, height: 200, crop: "fill"   }],
+        transformation: [{ width: 200, height: 200, crop: "fill" }],
     },
 });
 
-export { cloudinary, storage };
+// Storage for PDF and video content
+const contentStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'content',
+        allowed_formats: ['pdf', 'mp4', 'mov'],
+        resource_type: 'auto', // This allows uploading of different file types like videos
+    },
+});
+
+export { cloudinary, imageStorage, contentStorage };

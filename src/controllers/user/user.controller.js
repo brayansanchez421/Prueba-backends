@@ -1,5 +1,7 @@
 import User from "../../models/user/user.model.js";
 import Role from '../../models/user/role.models.js';
+import Course from '../../models/courses/course.model.js'; // Asegúrate de tener importado el modelo de curso
+
 import bcrypt from 'bcryptjs';
 
 import { setSend } from "../../helpers/setSend.js";
@@ -80,7 +82,49 @@ export const updateUser = async (req, res) => {
     }
 };
 
+export const registerToCourse = async (req, res) => {
+    const { userId, courseId } = req.body;
 
+    try {
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json(setSend("User not found"));
+        }
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json(setSend("Course not found"));
+        }
+
+        // Verificar si el curso ya está registrado en el usuario
+        if (user.courses.includes(courseId)) {
+            return res.status(400).json(setSend("User already registered to this course"));
+        }
+
+        user.courses.push(courseId);
+        await user.save();
+
+        res.status(200).json(setSend("User registered to course successfully"));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json(setSend("Internal server error"));
+    }
+};
+
+
+export const getUserCourses = async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const user = await User.findById(userId).populate('courses');
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+      res.status(200).json(user.courses);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error al obtener cursos del usuario' });
+    }
+  };
 
 
 
