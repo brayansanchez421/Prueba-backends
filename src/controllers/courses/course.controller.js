@@ -41,12 +41,11 @@ export const getAllCourses = async (req, res) => {
 
 
 export const createCourse = async (req, res) => {
-    const { title, description, category: categoryName, content } = req.body;
+    const { title, description, category: categoryName } = req.body;
     const file = req.file; // Obtener el archivo de imagen del cuerpo de la solicitud
-    const contentFile = req.file; // Obtener el archivo de contenido del cuerpo de la solicitud
 
     try {
-        console.log("Datos recibidos en la solicitud:", { title, description, categoryName, content, file });
+        console.log("Datos recibidos en la solicitud:", { title, description, categoryName,  file });
 
         // Buscar la categoría por nombre
         const category = await Category.findOne({ name: categoryName });
@@ -58,7 +57,6 @@ export const createCourse = async (req, res) => {
         }
 
         let imagePath = ''; // Inicializar la variable para almacenar la ruta de la imagen
-        let contentPath = ''; // Inicializar la variable para almacenar la ruta del contenido
 
         // Si se ha enviado un archivo de imagen
         if (file) {
@@ -66,9 +64,7 @@ export const createCourse = async (req, res) => {
         }
 
         // Si se ha enviado un archivo de contenido
-        if (contentFile) {
-            contentPath = contentFile.path; // Obtener la ruta del archivo de contenido
-        }
+      
 
         // Crear una nueva instancia del curso con los datos recibidos
         const newCourse = new Course({
@@ -76,7 +72,6 @@ export const createCourse = async (req, res) => {
             description,
             image: imagePath, // Guardar la ruta de la imagen en el campo 'image'
             category: category._id, // Usar el ID de la categoría encontrada
-            content: contentPath // Guardar la ruta del contenido en el campo 'content'
         });
 
         // Guardar el nuevo curso en la base de datos
@@ -92,7 +87,6 @@ export const createCourse = async (req, res) => {
             description: savedCourse.description,
             image: savedCourse.image,
             category: category.name, // Devolver el nombre de la categoría en la respuesta
-            content: savedCourse.content,
             createdAt: savedCourse.createdAt,
             updatedAt: savedCourse.updatedAt,
         });
@@ -116,7 +110,7 @@ export const updateCourse = async (req, res) => {
 
         const updatedCourse = await Course.findByIdAndUpdate(
             id, 
-            { title, description, image, category: categoryObject._id, content }, 
+            { title, description, image, category: categoryObject._id}, 
             { new: true }
         );
         
