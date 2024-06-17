@@ -119,6 +119,46 @@ export const updateCourse = async (req, res) => {
         res.status(500).json({ msg: 'Internal server error' });
     }
 };
+export const asignarContenido = async (req, res) => {
+    const { id } = req.params;
+    const contentPath  = req.file.path; // Obtener el path del archivo de contenido del cuerpo de la solicitud
+
+    console.log("verificacion: ", contentPath)
+
+    try {
+        // Buscar el curso por ID
+        const course = await Course.findById(id);
+        if (!course) {
+            return res.status(404).json(setSend("Course not found"));
+        }
+
+        // Asignar el contenido al curso
+        course.content.push(contentPath);
+        
+        // Guardar el curso actualizado en la base de datos
+        const savedCourse = await course.save();
+
+        // Log para verificar los datos guardados
+        console.log("Contenido asignado al curso:", savedCourse);
+
+        // Responder con el curso actualizado
+        res.json({
+            id: savedCourse._id,
+            title: savedCourse.title,
+            description: savedCourse.description,
+            image: savedCourse.image,
+            category: savedCourse.category,
+            content: savedCourse.content,
+            createdAt: savedCourse.createdAt,
+            updatedAt: savedCourse.updatedAt,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Internal server error" });
+    }
+};
+
+
 
 
 
