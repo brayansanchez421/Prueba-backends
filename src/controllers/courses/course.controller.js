@@ -100,22 +100,37 @@ export const createCourse = async (req, res) => {
 
 export const updateCourse = async (req, res) => {
     const { id } = req.params;
-    const { title, description, image, category, content } = req.body;
+    const { title, description, category, content } = req.body;
+    const file = req.file;
 
     try {
+        console.log(`Updating course with ID: ${id}`);
+        console.log(`Received data: title=${title}, description=${description}, category=${category}, content=${content}`);
+
         const categoryObject = await Category.findOne({ name: category });
         if (!categoryObject) {
+            console.log(`Category not found: ${category}`);
             return res.status(404).json({ msg: 'Category not found' });
         }
 
-        const updatedCourse = await Course.findByIdAndUpdate(
-            id, 
-            { title, description, image, category: categoryObject._id}, 
-            { new: true }
-        );
+        let updateData = { title, description, category: categoryObject._id, content };
+
+        // Si se ha enviado un archivo de imagen
+        if (file) {
+            updateData.image = file.path; // Obtener la ruta del archivo de imagen
+        }
+
+        const updatedCourse = await Course.findByIdAndUpdate(id, updateData, { new: true });
+
+        if (!updatedCourse) {
+            console.log(`Course not found: ${id}`);
+            return res.status(404).json({ msg: 'Course not found' });
+        }
         
+        console.log(`Course updated successfully: ${updatedCourse}`);
         res.json(updatedCourse);
     } catch (error) {
+        console.error(`Error updating course: ${error}`);
         res.status(500).json({ msg: 'Internal server error' });
     }
 };
