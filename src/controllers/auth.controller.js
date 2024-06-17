@@ -120,26 +120,41 @@ export const login = async (req, res) => {
 
   try {
     const userFound = await User.findOne({ email }).populate('role', 'nombre');
-    if (!userFound) return res.status(400).json(setSend("user not found"));
-    const isMatch = await bcrypt.compare(password, userFound.password);
-    if (!isMatch) return res.status(400).json(setSend("Incorrect Password"));
-    if (userFound.state == false) return res.status(400).json(setSend("Invalid user"));
+    if (!userFound) {
+      return res.status(400).json({ success: false, message: "user not found" });
+    }
 
-    const token = await createAccessToken({ email: userFound.email, id: userFound._id, role: userFound.role });
-    console.log(token);
+    const isMatch = await bcrypt.compare(password, userFound.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect Password" });
+    }
+
+    if (!userFound.state) {
+      return res.status(400).json({ success: false, message: "Invalid user" });
+    }
+
+    const token = await createAccessToken({
+      email: userFound.email,
+      id: userFound._id,
+      role: userFound.role,
+    });
 
     res.cookie("token", token);
     res.json({
-      id: userFound._id,
-      username: userFound.username,
-      role: userFound.role.nombre, // Mostrar el nombre del rol en lugar del ID
-      email: userFound.email,
-      createAt: userFound.createdAt,
-      updateAt: userFound.updatedAt,
-      token: token
+      success: true,
+      data: {
+        id: userFound._id,
+        username: userFound.username,
+        role: userFound.role.nombre,
+        email: userFound.email,
+        createAt: userFound.createdAt,
+        updateAt: userFound.updatedAt,
+        token: token
+      },
+      message: "Login successful"
     });
   } catch (error) {
-    res.status(500).json(setSend("error server", error));
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
 

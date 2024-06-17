@@ -21,8 +21,8 @@ router.get('/category/:categoryName', getCoursesByCategory);
 router.post('/createCourse', uploadImage.single('image'), createCourse);
 
 // If you have an endpoint that requires uploading content (e.g., PDFs or videos)
-router.post('/asignarContenido/:id', uploadContent.single('content'), asignarContenido);
 
+router.put('/updateCourse/:id', uploadImage.single('image'), updateCourse);
 router.put('/updateCourse/:id', updateCourse);
 router.delete('/deleteCourse/:id', deleteCourse);
 
