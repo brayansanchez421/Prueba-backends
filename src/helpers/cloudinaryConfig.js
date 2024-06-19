@@ -22,7 +22,7 @@ const contentStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'content',
-        allowed_formats: ['pdf', 'mp4', 'mov'],
+        allowed_formats: ['pdf', 'mp4', 'mov', 'doc'],
         resource_type: 'auto', // This allows uploading of different file types like videos
     },
 });

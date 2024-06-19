@@ -139,6 +139,9 @@ export const asignarContenido = async (req, res) => {
     const contentPath  = req.file.path; // Obtener el path del archivo de contenido del cuerpo de la solicitud
 
     console.log("verificacion: ", contentPath)
+    console.log("verificacion1: ", req.file)
+
+    
 
     try {
         // Buscar el curso por ID
