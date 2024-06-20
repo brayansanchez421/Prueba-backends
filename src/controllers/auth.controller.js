@@ -137,6 +137,8 @@ export const login = async (req, res) => {
       email: userFound.email,
       id: userFound._id,
       role: userFound.role,
+      courses: userFound.courses,
+
     });
 
     res.cookie("token", token);
@@ -147,6 +149,8 @@ export const login = async (req, res) => {
         username: userFound.username,
         role: userFound.role.nombre,
         email: userFound.email,
+        courses: userFound.courses,
+
         createAt: userFound.createdAt,
         updateAt: userFound.updatedAt,
         token: token
@@ -209,12 +213,16 @@ export const verifyToken = async (req, res) => {
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
+      courses: userFound.courses,
+
     });
 
     return res.json({
       id: userFound._id,
       username: userFound.username,
       email: userFound.email,
+      courses: userFound.courses,
+
     });
   });
 };
