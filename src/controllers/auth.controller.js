@@ -39,14 +39,15 @@ export const resetPasswordVerify = async (req, res) => {
 
   try {
     const user = await User.findOne({
-      resetCode,
-      resetCodeExpires: { $gt: Date.now() },
-    });
+      resetCode    });
 
     if (!user) {
       console.log('Invalid reset code or expired');
       return res.status(400).json(setSend("Invalid reset code or expired"));
     }
+
+    // Set the reset code in a cookie for subsequent requests
+    res.cookie("resetCode", resetCode, { httpOnly: true, secure: true });
 
     return res.status(200).json(setSend("Valid reset code", { email: user.email }));
   } catch (error) {
@@ -55,24 +56,42 @@ export const resetPasswordVerify = async (req, res) => {
   }
 };
 
+
 export const passwordReset = async (req, res) => {
-  const { email, password, confirmPassword } = req.body;
+  const { password, confirmPassword } = req.body;
+  const resetCode = req.cookies.resetCode; // Retrieve the reset code from the cookie
+
+  console.log('Reset Code:', resetCode);
+  console.log('Password:', password);
+  console.log('Confirm Password:', confirmPassword);
+
+  if (!resetCode) {
+    return res.status(400).json(setSend("Reset code is required"));
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json(setSend("Passwords do not match"));
+  }
 
   try {
-    if (password !== confirmPassword) {
-      return res.status(400).json(setSend("Passwords do not match"));
-    }
+    const user = await User.findOne({
+      resetCode    });
 
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json(setSend("Invalid email"));
+      return res.status(400).json(setSend("Invalid reset code or expired"));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await User.findOneAndUpdate({ email }, { password: hashedPassword });
+    user.password = hashedPassword;
+    user.resetCode = undefined; // Clear the reset code
+    user.resetCodeExpires = undefined; // Clear the reset code expiration
+    await user.save();
 
-    const result = await sendResetEmail(email);
+    // Clear the reset code cookie after successful reset
+    res.clearCookie("resetCode");
+
+    const result = await sendResetEmail(user.email);
     console.log('Email sent:', result);
     return res.status(200).json(setSend(result));
   } catch (error) {
@@ -80,6 +99,10 @@ export const passwordReset = async (req, res) => {
     return res.status(500).json(setSend("Internal server error"));
   }
 };
+
+
+
+
 
 
 
