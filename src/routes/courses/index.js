@@ -5,6 +5,7 @@ import CategoryRoutes from "./category.routes.js";
 
 
 routes.use("/courses", CoursesRoutes);
+
 routes.use("/category", CategoryRoutes);
 
 export default routes;
