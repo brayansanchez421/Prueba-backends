@@ -4,11 +4,6 @@ import { connectDB } from "./db.js";
 
 
 
-// Escuchando en un puerto
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
-    console.log(`Servidor escuchando en el puerto ${PORT}`);
-});
 
 
 app.get("/", (req, res) => {
