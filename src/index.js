@@ -1,6 +1,6 @@
 import app from "./app.js";
 import { connectDB } from "./db.js";
-import serveless from "serverless-http";
+
 
 
 const PORT = process.env.PORT | 3068;
