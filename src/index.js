@@ -3,14 +3,14 @@ import { connectDB } from "./db.js";
 
 
 
-const PORT = process.env.PORT | 3068;
 
 connectDB();
 
 
-app.listen(PORT, () =>
-  console.log("escuchando por el puerto y estoy ejecutando desde index", PORT)
-);
+const PORT = process.env.PORT || 3068;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 
 
