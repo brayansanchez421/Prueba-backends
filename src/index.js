@@ -1,8 +1,16 @@
 import app from "./app.js";
 import { connectDB } from "./db.js";
+import serveless from "serverless-http";
 
 
+const PORT = process.env.PORT | 3068;
 
+connectDB();
+
+
+app.listen(PORT, () =>
+  console.log("escuchando por el puerto y estoy ejecutando desde index", PORT)
+);
 
 
 
