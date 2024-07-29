@@ -14,7 +14,7 @@ dotenv.config();
 
 // ToDo: app.on()
 app.use(cors({
-    origin: 'https://prueba-backends.onrender.com', 
+    origin: 'https://brightmind3.netlify.app', 
     credentials: true
 
 }));
