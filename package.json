@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "debug": "nodemon --inspect index.js",
-    "start": "node src/index.js" 
+    "debug": "nodemon --inspect index.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +15,7 @@
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cloudinary": "^1.41.3",
+    "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "debug": "^4.3.4",
