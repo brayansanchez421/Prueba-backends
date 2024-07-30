@@ -2,12 +2,15 @@ import User from "../models/user/user.model.js";
 import bcrypt from "bcryptjs";
 import { createAccessToken } from "../libs/jwt.js";
 import { setSend } from "../helpers/setSend.js";
-import { sendResetCodeEmail, sendResetEmail, sendRegistrationEmail } from "../helpers/email/emailService.js";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import jwt from 'jsonwebtoken';
-import { TOKEN_SECRET } from '../config.js';
-
 dotenv.config();
+import {sendResetCodeEmail} from "../helpers/email/emailService.js"
+import {sendResetEmail} from "../helpers/email/emailReset.js"
+import {sendRegistrationEmail} from "../helpers/email/emailRegister.js"
+import passport from "passport";
+import jwt from 'jsonwebtoken'
+import {TOKEN_SECRET} from '../config.js'
 
 export const resetPassword = async (req, res) => {
   const { email } = req.body;
@@ -36,14 +39,15 @@ export const resetPasswordVerify = async (req, res) => {
 
   try {
     const user = await User.findOne({
-      resetCode,
-      resetCodeExpires: { $gt: Date.now() },
-    });
+      resetCode    });
 
     if (!user) {
       console.log('Invalid reset code or expired');
       return res.status(400).json(setSend("Invalid reset code or expired"));
     }
+
+    // Set the reset code in a cookie for subsequent requests
+    res.cookie("resetCode", resetCode, { httpOnly: true, secure: true });
 
     return res.status(200).json(setSend("Valid reset code", { email: user.email }));
   } catch (error) {
@@ -52,23 +56,42 @@ export const resetPasswordVerify = async (req, res) => {
   }
 };
 
+
 export const passwordReset = async (req, res) => {
-  const { email, password, confirmPassword } = req.body;
+  const { password, confirmPassword } = req.body;
+  const resetCode = req.cookies.resetCode; // Retrieve the reset code from the cookie
+
+  console.log('Reset Code:', resetCode);
+  console.log('Password:', password);
+  console.log('Confirm Password:', confirmPassword);
+
+  if (!resetCode) {
+    return res.status(400).json(setSend("Reset code is required"));
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json(setSend("Passwords do not match"));
+  }
 
   try {
-    if (password !== confirmPassword) {
-      return res.status(400).json(setSend("Passwords do not match"));
-    }
+    const user = await User.findOne({
+      resetCode    });
 
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json(setSend("Invalid email"));
+      return res.status(400).json(setSend("Invalid reset code or expired"));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.findOneAndUpdate({ email }, { password: hashedPassword });
 
-    const result = await sendResetEmail(email);
+    user.password = hashedPassword;
+    user.resetCode = undefined; // Clear the reset code
+    user.resetCodeExpires = undefined; // Clear the reset code expiration
+    await user.save();
+
+    // Clear the reset code cookie after successful reset
+    res.clearCookie("resetCode");
+
+    const result = await sendResetEmail(user.email);
     console.log('Email sent:', result);
     return res.status(200).json(setSend(result));
   } catch (error) {
@@ -77,12 +100,19 @@ export const passwordReset = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password} = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = new User({ username, email, password: passwordHash });
+    const newUser = new User({ username, email, password: passwordHash});
     const userSaved = await newUser.save();
     const token = await createAccessToken({ id: userSaved._id, role: userSaved.role });
 
@@ -131,9 +161,10 @@ export const login = async (req, res) => {
       id: userFound._id,
       role: userFound.role,
       courses: userFound.courses,
+
     });
 
-    res.cookie("token", token, { httpOnly: true, secure: true });
+    res.cookie("token", token);
     res.json({
       success: true,
       data: {
@@ -142,6 +173,7 @@ export const login = async (req, res) => {
         role: userFound.role.nombre,
         email: userFound.email,
         courses: userFound.courses,
+
         createAt: userFound.createdAt,
         updateAt: userFound.updatedAt,
         token: token
@@ -152,6 +184,7 @@ export const login = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   }
 };
+
 
 export const logout = (req, res) => {
   res.cookie("token", "", {
@@ -167,7 +200,7 @@ export const activate = async (req, res) => {
     const userFound = await User.findById(_id);
 
     if (!userFound) {
-      return res.status(404).json(setSend("Usuario no encontrado"));
+      return res.status(404).json(setSend( "Usuario no encontrado" ));
     }
 
     userFound.state = !userFound.state;
@@ -175,7 +208,7 @@ export const activate = async (req, res) => {
 
     return res.redirect('http://localhost:5173/activate');
   } catch (error) {
-    return res.status(500).json(setSend("Error en el servidor al activar usuario", error));
+    return res.status(500).json(setSend( "Error en el servidor al activar usuario", error ));
   }
 };
 
@@ -204,6 +237,7 @@ export const verifyToken = async (req, res) => {
       username: userFound.username,
       email: userFound.email,
       courses: userFound.courses,
+
     });
 
     return res.json({
@@ -211,6 +245,7 @@ export const verifyToken = async (req, res) => {
       username: userFound.username,
       email: userFound.email,
       courses: userFound.courses,
+
     });
   });
 };
