@@ -1,3 +1,5 @@
+// src/controllers/auth.controller.js
+
 import User from "../models/user/user.model.js";
 import bcrypt from "bcryptjs";
 import { createAccessToken } from "../libs/jwt.js";
@@ -8,7 +10,81 @@ import { sendRegistrationEmail } from "../helpers/email/emailRegister.js";
 import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
 
-// Registro de usuario
+export const resetPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json(setSend("User not found"));
+    }
+
+    const resetCode = Math.random().toString(36).substring(2, 8);
+    user.resetCode = resetCode;
+    user.resetCodeExpires = new Date(Date.now() + 3600000);
+    await user.save();
+
+    const result = await sendResetCodeEmail(email, resetCode);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(setSend("Internal server error"));
+  }
+};
+
+export const resetPasswordVerify = async (req, res) => {
+  const { resetCode } = req.body;
+
+  try {
+    const user = await User.findOne({ resetCode });
+
+    if (!user) {
+      console.log('Invalid reset code or expired');
+      return res.status(400).json(setSend("Invalid reset code or expired"));
+    }
+
+    res.cookie("resetCode", resetCode, { httpOnly: true, secure: true });
+    return res.status(200).json(setSend("Valid reset code", { email: user.email }));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(setSend("Internal server error"));
+  }
+};
+
+export const passwordReset = async (req, res) => {
+  const { password, confirmPassword } = req.body;
+  const resetCode = req.cookies.resetCode;
+
+  if (!resetCode) {
+    return res.status(400).json(setSend("Reset code is required"));
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json(setSend("Passwords do not match"));
+  }
+
+  try {
+    const user = await User.findOne({ resetCode });
+
+    if (!user) {
+      return res.status(400).json(setSend("Invalid reset code or expired"));
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    user.resetCode = undefined;
+    user.resetCodeExpires = undefined;
+    await user.save();
+
+    res.clearCookie("resetCode");
+    const result = await sendResetEmail(user.email);
+    return res.status(200).json(setSend(result));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json(setSend("Internal server error"));
+  }
+};
+
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -20,7 +96,7 @@ export const register = async (req, res) => {
 
     await sendRegistrationEmail(email, username, userSaved);
 
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie("token", token, { httpOnly: true, secure: true });
     res.json({
       id: userSaved._id,
       username: userSaved.username,
@@ -40,7 +116,6 @@ export const register = async (req, res) => {
   }
 };
 
-// Inicio de sesión
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -66,7 +141,7 @@ export const login = async (req, res) => {
       courses: userFound.courses,
     });
 
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie("token", token);
     res.json({
       success: true,
       data: {
@@ -86,17 +161,32 @@ export const login = async (req, res) => {
   }
 };
 
-// Logout
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
   });
   return res.status(200).send("successful Logout");
 };
 
-// Verificación del Token
+export const activate = async (req, res) => {  
+  const { _id } = req.params;
+  try {
+    const userFound = await User.findById(_id);
+
+    if (!userFound) {
+      return res.status(404).json(setSend("Usuario no encontrado"));
+    }
+
+    userFound.state = !userFound.state;
+    await userFound.save();
+
+    return res.redirect('http://localhost:5173/activate');
+  } catch (error) {
+    return res.status(500).json(setSend("Error en el servidor al activar usuario", error));
+  }
+};
+
 export const verifyToken = async (req, res) => {
   const { token } = req.cookies;
   if (!token) return res.status(401).json({ message: "Unauthorized" });
@@ -108,8 +198,8 @@ export const verifyToken = async (req, res) => {
     }
 
     const userFound = await User.findOne({ email: user.email });
+
     if (!userFound) {
-      console.error("Usuario no encontrado:");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
