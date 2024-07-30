@@ -14,7 +14,7 @@ dotenv.config();
 
 // Configuración de CORS
 const corsOptions = {
-  origin: 'https://brightmind3.netlify.app/', // Permitir solo este origen
+  origin: 'https://brightmind3.netlify.app', // Permitir solo este origen
   credentials: true, // Permitir enviar cookies de autenticación
   optionsSuccessStatus: 200 // Algunos navegadores (IE11, algunos SmartTVs) no soportan 204
 };
