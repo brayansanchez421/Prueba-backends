@@ -22,11 +22,10 @@ app.use(cors({
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
-app.use("/PE", RoutesApp);
 
 // Configuración de la sesión
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your_secret_key', // Define tu clave secreta en las variables de entorno
+    secret: process.env.SESSION_SECRET || 'your_secret_key',
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -40,6 +39,6 @@ app.use(session({
     }
 }));
 
-app.use(RoutesApp);
+app.use("/PE", RoutesApp);
 
 export default app;
