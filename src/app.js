@@ -16,7 +16,7 @@ const app = express();
 connectDB();
 
 app.use(cors({
-    origin: 'https://brightmind3.netlify.app',
+    origin: 'https://pruebas-de-despliegue.onrender.com',
     credentials: true
 }));
 app.use(morgan("dev"));
