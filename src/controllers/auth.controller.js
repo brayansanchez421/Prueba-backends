@@ -1,15 +1,11 @@
 import User from "../models/user/user.model.js";
 import bcrypt from "bcryptjs";
-import jwt from 'jsonwebtoken';
-import dotenv from "dotenv";
 import { createAccessToken } from "../libs/jwt.js";
 import { setSend } from "../helpers/setSend.js";
 import { sendResetCodeEmail, sendResetEmail, sendRegistrationEmail } from "../helpers/email/emailService.js";
+import jwt from 'jsonwebtoken';
 import { TOKEN_SECRET } from '../config.js';
 
-dotenv.config();
-
-// Función para manejar el restablecimiento de contraseña (enviar código de restablecimiento)
 export const resetPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -21,7 +17,7 @@ export const resetPassword = async (req, res) => {
 
     const resetCode = Math.random().toString(36).substring(2, 8);
     user.resetCode = resetCode;
-    user.resetCodeExpires = new Date(Date.now() + 3600000); // Código válido por 1 hora
+    user.resetCodeExpires = new Date(Date.now() + 3600000);
     await user.save();
 
     const result = await sendResetCodeEmail(email, resetCode);
@@ -32,7 +28,6 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-// Función para verificar el código de restablecimiento de contraseña
 export const resetPasswordVerify = async (req, res) => {
   const { resetCode } = req.body;
 
@@ -46,6 +41,9 @@ export const resetPasswordVerify = async (req, res) => {
       return res.status(400).json(setSend("Invalid reset code or expired"));
     }
 
+    // Set the reset code in a cookie for subsequent requests
+    res.cookie("resetCode", resetCode, { httpOnly: true, secure: true });
+
     return res.status(200).json(setSend("Valid reset code", { email: user.email }));
   } catch (error) {
     console.error(error);
@@ -53,24 +51,39 @@ export const resetPasswordVerify = async (req, res) => {
   }
 };
 
-// Función para restablecer la contraseña
 export const passwordReset = async (req, res) => {
-  const { email, password, confirmPassword } = req.body;
+  const { password, confirmPassword } = req.body;
+  const resetCode = req.cookies.resetCode; // Retrieve the reset code from the cookie
+
+  if (!resetCode) {
+    return res.status(400).json(setSend("Reset code is required"));
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json(setSend("Passwords do not match"));
+  }
 
   try {
-    if (password !== confirmPassword) {
-      return res.status(400).json(setSend("Passwords do not match"));
-    }
+    const user = await User.findOne({
+      resetCode,
+      resetCodeExpires: { $gt: Date.now() },
+    });
 
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json(setSend("Invalid email"));
+      return res.status(400).json(setSend("Invalid reset code or expired"));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.findOneAndUpdate({ email }, { password: hashedPassword });
 
-    const result = await sendResetEmail(email);
+    user.password = hashedPassword;
+    user.resetCode = undefined; // Clear the reset code
+    user.resetCodeExpires = undefined; // Clear the reset code expiration
+    await user.save();
+
+    // Clear the reset code cookie after successful reset
+    res.clearCookie("resetCode");
+
+    const result = await sendResetEmail(user.email);
     return res.status(200).json(setSend(result));
   } catch (error) {
     console.error(error);
@@ -78,7 +91,6 @@ export const passwordReset = async (req, res) => {
   }
 };
 
-// Función para registrar un nuevo usuario
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -90,7 +102,7 @@ export const register = async (req, res) => {
 
     await sendRegistrationEmail(email, username, userSaved);
 
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie("token", token, { httpOnly: true, secure: true });
     res.json({
       id: userSaved._id,
       username: userSaved.username,
@@ -103,14 +115,13 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
-      return res.status(400).json(setSend("Email already exists"));
+      res.status(400).json(setSend("Email already exists"));
     } else {
-      return res.status(500).json(setSend("Internal server error"));
+      res.status(500).json(setSend("Internal server error"));
     }
   }
 };
 
-// Función para iniciar sesión
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -122,7 +133,7 @@ export const login = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, userFound.password);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: "Incorrect Password" });
+      return res.status(400).json({ success: false, message: "Incorrect password" });
     }
 
     if (!userFound.state) {
@@ -136,7 +147,7 @@ export const login = async (req, res) => {
       courses: userFound.courses,
     });
 
-    res.cookie("token", token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie("token", token);
     res.json({
       success: true,
       data: {
@@ -156,18 +167,15 @@ export const login = async (req, res) => {
   }
 };
 
-// Función para cerrar sesión
 export const logout = (req, res) => {
   res.cookie("token", "", {
     expires: new Date(0),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production'
   });
   return res.status(200).send("Successful logout");
 };
 
-// Función para activar/desactivar un usuario
-export const activate = async (req, res) => {  
+export const activate = async (req, res) => {
   const { _id } = req.params;
   try {
     const userFound = await User.findById(_id);
@@ -179,16 +187,14 @@ export const activate = async (req, res) => {
     userFound.state = !userFound.state;
     await userFound.save();
 
-    return res.redirect('http://localhost:5173/activate'); // Ajusta la URL según tu configuración
+    return res.redirect('http://localhost:5173/activate');
   } catch (error) {
-    return res.status(500).json(setSend("Error activating user", error));
+    return res.status(500).json(setSend("Server error while activating user", error));
   }
 };
 
-// Función para verificar el token de sesión
 export const verifyToken = async (req, res) => {
   const { token } = req.cookies;
-  console.log("Received token:", token);
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   jwt.verify(token, TOKEN_SECRET, async (err, user) => {
@@ -197,21 +203,11 @@ export const verifyToken = async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log("User data from token:", user);
     const userFound = await User.findOne({ email: user.email });
-    console.log("User found:", userFound);
-
     if (!userFound) {
       console.error("User not found");
       return res.status(401).json({ message: "Unauthorized" });
     }
-
-    console.log("User data found:", {
-      id: userFound._id,
-      username: userFound.username,
-      email: userFound.email,
-      courses: userFound.courses,
-    });
 
     return res.json({
       id: userFound._id,
