@@ -35,7 +35,7 @@ export const sendRegistrationEmail = async (email, name, userSaved) => {
       <h1>¡Congratulation! you have been regitstered succesfully</h1>
       <p>Hola ${name},</p>
       <p>We are happy to have you with us. activate your account by clicking this link:</p>
-      <p><a href="http://localhost:3068/PE/activation/${userSaved._id}">Here!</a></p>
+      <p><a href="https://prueba-backends.onrender.com/PE/activation/${userSaved._id}">Here!</a></p>
   </div>  </body> </html> `,
     };
   
