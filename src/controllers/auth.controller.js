@@ -181,7 +181,7 @@ export const activate = async (req, res) => {
     userFound.state = !userFound.state;
     await userFound.save();
 
-    return res.redirect('http://localhost:5173/activate');
+    return res.redirect('http://localhost:3068/PE/activation/${userSaved._id}');
   } catch (error) {
     return res.status(500).json(setSend("Error en el servidor al activar usuario", error));
   }
