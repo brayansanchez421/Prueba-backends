@@ -1,1 +1,1 @@
-export const TOKEN_SECRET = 'cual es la clave'
+export const TOKEN_SECRET = 'myVerySecretKey'
