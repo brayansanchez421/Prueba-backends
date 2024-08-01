@@ -181,7 +181,7 @@ export const activate = async (req, res) => {
     userFound.state = !userFound.state;
     await userFound.save();
 
-    return res.redirect('https://prueba-backends.onrender.com/activate');
+    return res.redirect('http://localhost:5173/activate');
   } catch (error) {
     return res.status(500).json(setSend("Error en el servidor al activar usuario", error));
   }
