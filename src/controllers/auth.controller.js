@@ -122,7 +122,7 @@ export const login = async (req, res) => {
   try {
     const userFound = await User.findOne({ email }).populate('role', 'nombre');
     if (!userFound) {
-      return res.status(400).json({ success: false, message: "user not found" });
+      return res.status(400).json({ success: false, message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, userFound.password);
@@ -141,7 +141,7 @@ export const login = async (req, res) => {
       courses: userFound.courses,
     });
 
-    res.cookie("token", token);
+    res.cookie("token", token, { httpOnly: true, secure: true, sameSite: 'None' }); // Ensure cookie is secure
     res.json({
       success: true,
       data: {
@@ -188,17 +188,15 @@ export const activate = async (req, res) => {
 };
 
 export const verifyToken = async (req, res) => {
-  const { token } = req.cookies;
+  const token = req.cookies.token; // Retrieve the token from the cookie
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   jwt.verify(token, TOKEN_SECRET, async (err, user) => {
     if (err) {
-      console.error("Error al verificar el token:", err);
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const userFound = await User.findOne({ email: user.email });
-
     if (!userFound) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -211,3 +209,4 @@ export const verifyToken = async (req, res) => {
     });
   });
 };
+
